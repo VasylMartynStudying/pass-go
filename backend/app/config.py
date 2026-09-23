@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     debug: bool = True
     api_prefix: str = "/api"
     cors_origins: str = "http://localhost:5173"
+    database_url: str = "sqlite:///./passgo.db"
 
     model_config = SettingsConfigDict(
         env_file=".env",

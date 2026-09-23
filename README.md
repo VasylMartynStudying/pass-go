@@ -4,7 +4,7 @@
 
 ## Структура
 
-- `backend/` — FastAPI, ASGI/Uvicorn, Poetry; SQLite буде підключено через SQLAlchemy.
+- `backend/` — FastAPI, SQLAlchemy, Alembic, SQLite, ASGI/Uvicorn, Poetry.
 - `frontend/` — React, Vite, TypeScript, Tailwind CSS, Shadcn UI.
 
 ## Backend
@@ -15,6 +15,7 @@
 cd backend
 cp .env.example .env
 poetry install
+poetry run alembic upgrade head
 poetry run uvicorn app.main:app --reload
 ```
 
@@ -27,6 +28,7 @@ API буде доступний за адресою `http://localhost:8000/api/`
 ```bash
 poetry run ruff check .
 poetry run ruff format --check .
+poetry run pytest
 ```
 
 ## Frontend

@@ -6,6 +6,25 @@ export type HealthResponse = {
   timestamp: string
 }
 
+export type EventSummary = {
+  slug: string
+  title: string
+  starts_at: string
+  location: string
+  capacity: number
+  occupied_seats: number
+  available_seats: number
+}
+
+export type EventDetail = EventSummary & {
+  description: string
+}
+
+export type EventListResponse = {
+  items: EventSummary[]
+  total: number
+}
+
 export class ApiError extends Error {
   readonly status: number
 
@@ -37,4 +56,16 @@ export async function apiRequest<T>(
 
 export function getHealth() {
   return apiRequest<HealthResponse>('/health/')
+}
+
+export function getEvents(search?: string) {
+  const params = new URLSearchParams()
+  if (search) params.set('search', search)
+  const query = params.size ? `?${params.toString()}` : ''
+
+  return apiRequest<EventListResponse>(`/public/events${query}`)
+}
+
+export function getEvent(slug: string) {
+  return apiRequest<EventDetail>(`/public/events/${encodeURIComponent(slug)}`)
 }
