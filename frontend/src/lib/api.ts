@@ -33,6 +33,15 @@ export type RegistrationResponse = {
   event_slug: string
 }
 
+export type TicketResponse = {
+  ticket_token: string
+  full_name: string
+  event_title: string
+  event_slug: string
+  starts_at: string
+  location: string
+}
+
 export class ApiError extends Error {
   readonly status: number
 
@@ -108,5 +117,11 @@ export function registerForEvent(
       method: 'POST',
       body: JSON.stringify(payload),
     },
+  )
+}
+
+export function getTicket(ticketToken: string) {
+  return apiRequest<TicketResponse>(
+    `/public/tickets/${encodeURIComponent(ticketToken)}/`,
   )
 }

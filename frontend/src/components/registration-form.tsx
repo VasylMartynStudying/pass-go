@@ -1,4 +1,4 @@
-import { CircleCheck, LoaderCircle } from 'lucide-react'
+import { LoaderCircle } from 'lucide-react'
 import { type FormEvent, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -107,23 +107,4 @@ function RegistrationForm({ event, onRegistered }: RegistrationFormProps) {
   )
 }
 
-function RegistrationSuccess({
-  registration,
-}: {
-  registration: RegistrationResponse
-}) {
-  return (
-    <div className="space-y-3 text-center" role="status">
-      <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-        <CircleCheck className="size-6" aria-hidden="true" />
-      </div>
-      <h3 className="text-lg font-semibold">Ви зареєстровані</h3>
-      <p className="text-sm text-muted-foreground">
-        {registration.full_name}, ви зареєстровані на «{registration.event_title}»
-        з адресою {registration.email}.
-      </p>
-    </div>
-  )
-}
-
-export { RegistrationForm, RegistrationSuccess }
+export { RegistrationForm }

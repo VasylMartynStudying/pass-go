@@ -6,20 +6,12 @@ import {
   Users,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 
-import {
-  RegistrationForm,
-  RegistrationSuccess,
-} from '@/components/registration-form'
+import { RegistrationForm } from '@/components/registration-form'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  ApiError,
-  getEvent,
-  type EventDetail,
-  type RegistrationResponse,
-} from '@/lib/api'
+import { ApiError, getEvent, type EventDetail } from '@/lib/api'
 import { formatEventDate } from '@/lib/date'
 
 type DetailState =
@@ -30,26 +22,11 @@ type DetailState =
 
 function EventDetailPage() {
   const { slug = '' } = useParams()
+  const navigate = useNavigate()
   const [state, setState] = useState<DetailState>({ status: 'loading' })
-  const [registration, setRegistration] = useState<RegistrationResponse | null>(
-    null,
-  )
 
-  function handleRegistered(nextRegistration: RegistrationResponse) {
-    setRegistration(nextRegistration)
-    setState((current) => {
-      if (current.status !== 'success') return current
-
-      const occupiedSeats = current.event.occupied_seats + 1
-      return {
-        status: 'success',
-        event: {
-          ...current.event,
-          occupied_seats: occupiedSeats,
-          available_seats: Math.max(current.event.capacity - occupiedSeats, 0),
-        },
-      }
-    })
+  function handleRegistered(ticketToken: string) {
+    void navigate(`/tickets/${ticketToken}`, { replace: true })
   }
 
   useEffect(() => {
@@ -181,14 +158,12 @@ function EventDetailPage() {
                 </p>
               </div>
 
-              {registration ? (
-                <RegistrationSuccess registration={registration} />
-              ) : (
-                <RegistrationForm
-                  event={event}
-                  onRegistered={handleRegistered}
-                />
-              )}
+              <RegistrationForm
+                event={event}
+                onRegistered={(registration) =>
+                  handleRegistered(registration.ticket_token)
+                }
+              />
             </CardContent>
           </Card>
         </aside>

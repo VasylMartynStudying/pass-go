@@ -52,3 +52,12 @@ class RegistrationResponse(BaseModel):
     email: str
     event_title: str
     event_slug: str
+
+
+class TicketResponse(BaseModel):
+    ticket_token: str
+    full_name: str
+    event_title: str
+    event_slug: str
+    starts_at: datetime
+    location: str
