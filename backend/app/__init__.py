@@ -1,0 +1,1 @@
+"""PassGo FastAPI application."""
