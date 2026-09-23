@@ -61,3 +61,26 @@ class TicketResponse(BaseModel):
     event_slug: str
     starts_at: datetime
     location: str
+
+
+class LoginRequest(BaseModel):
+    email: str = Field(min_length=5, max_length=255)
+    password: str = Field(min_length=1, max_length=255)
+
+    @field_validator("email")
+    @classmethod
+    def normalize_login_email(cls, value: str) -> str:
+        return value.strip().lower()
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int
+
+
+class OrganizerMe(BaseModel):
+    id: int
+    email: str
+    full_name: str
+    is_admin: bool

@@ -42,6 +42,19 @@ export type TicketResponse = {
   location: string
 }
 
+export type TokenResponse = {
+  access_token: string
+  token_type: string
+  expires_in: number
+}
+
+export type OrganizerMe = {
+  id: number
+  email: string
+  full_name: string
+  is_admin: boolean
+}
+
 export class ApiError extends Error {
   readonly status: number
 
@@ -50,6 +63,17 @@ export class ApiError extends Error {
     this.name = 'ApiError'
     this.status = status
   }
+}
+
+let accessToken: string | null = null
+let refreshRequest: Promise<string | null> | null = null
+
+export function getAccessToken() {
+  return accessToken
+}
+
+export function setAccessToken(token: string | null) {
+  accessToken = token
 }
 
 function errorMessage(payload: unknown, fallback: string) {
@@ -68,24 +92,75 @@ function errorMessage(payload: unknown, fallback: string) {
   return fallback
 }
 
+type ApiRequestOptions = RequestInit & {
+  auth?: boolean
+  retry?: boolean
+}
+
+function authHeaders(): HeadersInit {
+  return accessToken ? { Authorization: `Bearer ${accessToken}` } : {}
+}
+
+async function parseError(response: Response) {
+  const payload: unknown = await response.json().catch(() => null)
+  return new ApiError(
+    errorMessage(payload, 'Не вдалося виконати запит до сервера.'),
+    response.status,
+  )
+}
+
+export async function refreshAccessToken() {
+  if (!refreshRequest) {
+    refreshRequest = fetch(`${API_URL}/auth/refresh/`, {
+      method: 'POST',
+      credentials: 'include',
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          setAccessToken(null)
+          return null
+        }
+
+        const data = (await response.json()) as TokenResponse
+        setAccessToken(data.access_token)
+        return data.access_token
+      })
+      .finally(() => {
+        refreshRequest = null
+      })
+  }
+
+  return refreshRequest
+}
+
 export async function apiRequest<T>(
   path: string,
-  init?: RequestInit,
+  init: ApiRequestOptions = {},
 ): Promise<T> {
+  const { auth = false, retry = true, headers, ...rest } = init
   const response = await fetch(`${API_URL}${path}`, {
-    ...init,
+    ...rest,
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      ...init?.headers,
+      ...(auth ? authHeaders() : {}),
+      ...headers,
     },
   })
 
+  if (response.status === 401 && auth && retry && !path.startsWith('/auth/')) {
+    const nextToken = await refreshAccessToken()
+    if (nextToken) {
+      return apiRequest<T>(path, { ...init, retry: false })
+    }
+  }
+
   if (!response.ok) {
-    const payload: unknown = await response.json().catch(() => null)
-    throw new ApiError(
-      errorMessage(payload, 'Не вдалося виконати запит до сервера.'),
-      response.status,
-    )
+    throw await parseError(response)
+  }
+
+  if (response.status === 204) {
+    return undefined as T
   }
 
   return response.json() as Promise<T>
@@ -124,4 +199,25 @@ export function getTicket(ticketToken: string) {
   return apiRequest<TicketResponse>(
     `/public/tickets/${encodeURIComponent(ticketToken)}/`,
   )
+}
+
+export async function loginOrganizer(email: string, password: string) {
+  const tokens = await apiRequest<TokenResponse>('/auth/login/', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  })
+  setAccessToken(tokens.access_token)
+  return tokens
+}
+
+export async function logoutOrganizer() {
+  try {
+    await apiRequest<void>('/auth/logout/', { method: 'POST' })
+  } finally {
+    setAccessToken(null)
+  }
+}
+
+export function getCurrentOrganizer() {
+  return apiRequest<OrganizerMe>('/auth/me/', { auth: true })
 }

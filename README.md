@@ -23,6 +23,14 @@ API буде доступний за адресою `http://localhost:8000/api/`
 стану — `http://localhost:8000/api/health/`.
 Інтерактивна документація OpenAPI доступна на `http://localhost:8000/docs`.
 
+Заповнити базу тестовими даними (організатор, заходи, кілька реєстрацій):
+
+```bash
+poetry run python scripts/seed.py
+```
+
+Вхід організатора: `organizer@example.com` / `secret123`.
+
 Корисні команди:
 
 ```bash

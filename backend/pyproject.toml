@@ -6,6 +6,8 @@ requires-python = ">=3.12,<4.0"
 dependencies = [
     "alembic>=1.16,<2.0",
     "fastapi>=0.116,<0.117",
+    "pwdlib[argon2]>=0.2,<0.3",
+    "pyjwt>=2.10,<3.0",
     "pydantic-settings>=2.10,<3.0",
     "sqlalchemy>=2.0,<2.1",
     "uvicorn[standard]>=0.35,<0.36",

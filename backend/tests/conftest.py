@@ -10,6 +10,7 @@ from sqlalchemy.pool import StaticPool
 from app.database import Base, get_db, register_sqlite_functions
 from app.main import app
 from app.models import Event, EventStatus, Organizer
+from app.security import hash_password
 
 test_engine = create_engine(
     "sqlite://",
@@ -37,11 +38,18 @@ def client() -> Generator[TestClient]:
         yield test_client
 
 
-def create_organizer(session: Session) -> Organizer:
+def create_organizer(
+    session: Session,
+    *,
+    email: str = "organizer@example.com",
+    password: str | None = None,
+    is_active: bool = True,
+) -> Organizer:
     organizer = Organizer(
-        email="organizer@example.com",
+        email=email,
         full_name="Test Organizer",
-        hashed_password="not-used-yet",
+        hashed_password=hash_password(password) if password else "not-used-yet",
+        is_active=is_active,
     )
     session.add(organizer)
     session.flush()

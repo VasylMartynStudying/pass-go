@@ -11,6 +11,10 @@ class Settings(BaseSettings):
     api_prefix: str = "/api"
     cors_origins: str = "http://localhost:5173"
     database_url: str = "sqlite:///./passgo.db"
+    jwt_secret_key: str = "passgo-development-secret-change-me"
+    jwt_algorithm: str = "HS256"
+    access_token_minutes: int = 15
+    refresh_token_days: int = 7
 
     model_config = SettingsConfigDict(
         env_file=".env",
