@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from enum import StrEnum
+from uuid import uuid4
 
 from sqlalchemy import (
     Boolean,
@@ -12,6 +13,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -76,3 +78,32 @@ class Event(Base):
     )
 
     owner: Mapped[Organizer] = relationship(back_populates="events")
+    registrations: Mapped[list[Registration]] = relationship(back_populates="event")
+
+
+class Registration(Base):
+    __tablename__ = "registrations"
+    __table_args__ = (
+        UniqueConstraint("event_id", "email", name="uq_registrations_event_email"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    event_id: Mapped[int] = mapped_column(
+        ForeignKey("events.id", ondelete="RESTRICT"), index=True
+    )
+    full_name: Mapped[str] = mapped_column(String(255))
+    email: Mapped[str] = mapped_column(String(255), index=True)
+    ticket_token: Mapped[str] = mapped_column(
+        String(36), unique=True, default=lambda: str(uuid4()), index=True
+    )
+    checked_in_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now
+    )
+
+    event: Mapped[Event] = relationship(back_populates="registrations")

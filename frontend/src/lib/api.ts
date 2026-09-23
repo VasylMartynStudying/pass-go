@@ -25,6 +25,14 @@ export type EventListResponse = {
   total: number
 }
 
+export type RegistrationResponse = {
+  ticket_token: string
+  full_name: string
+  email: string
+  event_title: string
+  event_slug: string
+}
+
 export class ApiError extends Error {
   readonly status: number
 
@@ -33,6 +41,22 @@ export class ApiError extends Error {
     this.name = 'ApiError'
     this.status = status
   }
+}
+
+function errorMessage(payload: unknown, fallback: string) {
+  if (
+    payload &&
+    typeof payload === 'object' &&
+    'detail' in payload
+  ) {
+    const detail = payload.detail
+    if (typeof detail === 'string' && detail.trim()) return detail
+    if (Array.isArray(detail) && typeof detail[0]?.msg === 'string') {
+      return detail[0].msg
+    }
+  }
+
+  return fallback
 }
 
 export async function apiRequest<T>(
@@ -48,7 +72,11 @@ export async function apiRequest<T>(
   })
 
   if (!response.ok) {
-    throw new ApiError('Не вдалося виконати запит до сервера.', response.status)
+    const payload: unknown = await response.json().catch(() => null)
+    throw new ApiError(
+      errorMessage(payload, 'Не вдалося виконати запит до сервера.'),
+      response.status,
+    )
   }
 
   return response.json() as Promise<T>
@@ -68,4 +96,17 @@ export function getEvents(search?: string) {
 
 export function getEvent(slug: string) {
   return apiRequest<EventDetail>(`/public/events/${encodeURIComponent(slug)}`)
+}
+
+export function registerForEvent(
+  slug: string,
+  payload: { full_name: string; email: string },
+) {
+  return apiRequest<RegistrationResponse>(
+    `/public/events/${encodeURIComponent(slug)}/registrations/`,
+    {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    },
+  )
 }
