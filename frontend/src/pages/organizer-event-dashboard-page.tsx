@@ -1,5 +1,6 @@
 import {
   ChevronLeft,
+  Download,
   LoaderCircle,
   Pencil,
   Search,
@@ -7,12 +8,14 @@ import {
 } from 'lucide-react'
 import { type FormEvent, useEffect, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import {
   ApiError,
+  downloadEventAttendeesCsv,
   getEventDashboard,
   type EventDashboardResponse,
   type EventStatus,
@@ -53,6 +56,7 @@ function OrganizerEventDashboardPage() {
   const offset = parseOffset(searchParams.get('offset'))
   const requestKey = `${slug ?? ''}|${search}|${checkedIn}|${offset}`
   const [retryKey, setRetryKey] = useState(0)
+  const [isExporting, setIsExporting] = useState(false)
   const [dashboard, setDashboard] = useState<DashboardState>({
     status: 'loading',
     requestKey: '',
@@ -126,6 +130,26 @@ function OrganizerEventDashboardPage() {
     setSearchParams(nextParams)
   }
 
+  async function exportCsv() {
+    if (!slug || isExporting) return
+    setIsExporting(true)
+    try {
+      await downloadEventAttendeesCsv(slug, { search, checkedIn })
+      toast.success('CSV завантажено', {
+        description: 'Список учасників збережено у файл.',
+      })
+    } catch (error: unknown) {
+      toast.error('Не вдалося експортувати CSV', {
+        description:
+          error instanceof ApiError
+            ? error.message
+            : 'Спробуйте ще раз за кілька секунд.',
+      })
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
   const isLoading =
     dashboard.status === 'loading' || dashboard.requestKey !== requestKey
 
@@ -182,12 +206,23 @@ function OrganizerEventDashboardPage() {
           )}
         </div>
         {event && (
-          <Button variant="outline" asChild>
-            <Link to={`/organizer/events/${event.slug}/edit`}>
-              <Pencil className="size-4" aria-hidden="true" />
-              Редагувати
-            </Link>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              disabled={isExporting}
+              onClick={() => {
+                void exportCsv()
+              }}
+            >
+              <Download className="size-4" aria-hidden="true" />
+              {isExporting ? 'Завантажуємо…' : 'Експорт CSV'}
+            </Button>
+            <Button variant="outline" asChild>
+              <Link to={`/organizer/events/${event.slug}/edit`}>
+                <Pencil className="size-4" aria-hidden="true" />
+                Редагувати
+              </Link>
+            </Button>
+          </div>
         )}
       </div>
 

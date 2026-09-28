@@ -309,25 +309,78 @@ export function deleteOrganizerEvent(slug: string) {
   })
 }
 
-export function getEventDashboard(
-  slug: string,
-  params?: {
-    search?: string
-    checkedIn?: 'all' | 'yes' | 'no'
-    offset?: number
-    limit?: number
-  },
-) {
+type AttendeeQuery = {
+  search?: string
+  checkedIn?: 'all' | 'yes' | 'no'
+  offset?: number
+  limit?: number
+}
+
+function attendeeQuery(params?: AttendeeQuery) {
   const query = new URLSearchParams()
   if (params?.search) query.set('search', params.search)
   if (params?.checkedIn === 'yes') query.set('checked_in', 'true')
   if (params?.checkedIn === 'no') query.set('checked_in', 'false')
   if (params?.offset) query.set('offset', String(params.offset))
   if (params?.limit) query.set('limit', String(params.limit))
-  const suffix = query.size ? `?${query.toString()}` : ''
+  return query.size ? `?${query.toString()}` : ''
+}
 
+function filenameFromDisposition(header: string | null, fallback: string) {
+  if (!header) return fallback
+  const utfMatch = header.match(/filename\*=UTF-8''([^;]+)/i)
+  if (utfMatch?.[1]) {
+    try {
+      return decodeURIComponent(utfMatch[1])
+    } catch {
+      return fallback
+    }
+  }
+  const asciiMatch = header.match(/filename="([^"]+)"/i)
+  return asciiMatch?.[1] || fallback
+}
+
+export function getEventDashboard(slug: string, params?: AttendeeQuery) {
   return apiRequest<EventDashboardResponse>(
-    `/organizer/events/${encodeURIComponent(slug)}/dashboard/${suffix}`,
+    `/organizer/events/${encodeURIComponent(slug)}/dashboard/${attendeeQuery(params)}`,
     { auth: true },
   )
+}
+
+export async function downloadEventAttendeesCsv(
+  slug: string,
+  params?: Pick<AttendeeQuery, 'search' | 'checkedIn'>,
+) {
+  const path = `/organizer/events/${encodeURIComponent(slug)}/attendees.csv/${attendeeQuery(params)}`
+
+  async function request(retry: boolean) {
+    const response = await fetch(`${API_URL}${path}`, {
+      credentials: 'include',
+      headers: authHeaders(),
+    })
+    if (response.status === 401 && retry) {
+      const nextToken = await refreshAccessToken()
+      if (nextToken) return request(false)
+    }
+    return response
+  }
+
+  const response = await request(true)
+  if (!response.ok) {
+    throw await parseError(response)
+  }
+
+  const blob = await response.blob()
+  const filename = filenameFromDisposition(
+    response.headers.get('Content-Disposition'),
+    `${slug}-participants.csv`,
+  )
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.append(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
 }

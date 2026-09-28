@@ -1,7 +1,11 @@
+import csv
+import io
 from datetime import UTC, datetime
 from typing import Annotated
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import Response
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
@@ -249,4 +253,54 @@ def get_event_dashboard(
         attendees_total=attendees_total,
         limit=limit,
         offset=offset,
+    )
+
+
+CSV_HEADERS = ["Ім’я", "Email", "Зареєстровано", "Check-in"]
+
+
+def csv_datetime(value: datetime | None) -> str:
+    if value is None:
+        return ""
+    return aware(value).isoformat()
+
+
+@router.get("/{slug}/attendees.csv/")
+def export_event_attendees(
+    slug: str,
+    organizer: CurrentOrganizer,
+    db: DatabaseSession,
+    search: Annotated[str | None, Query(max_length=100)] = None,
+    checked_in: Annotated[bool | None, Query()] = None,
+) -> Response:
+    event = get_owned_event(db, organizer, slug)
+    attendees = db.scalars(
+        select(Registration)
+        .where(*attendee_filters(event.id, search, checked_in))
+        .order_by(Registration.created_at.asc(), Registration.id.asc())
+    ).all()
+
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow(CSV_HEADERS)
+    writer.writerows(
+        [
+            item.full_name,
+            item.email,
+            csv_datetime(item.created_at),
+            csv_datetime(item.checked_in_at),
+        ]
+        for item in attendees
+    )
+
+    filename = f"{event.slug}-participants.csv"
+    return Response(
+        content="\ufeff" + buffer.getvalue(),
+        media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": (
+                f'attachment; filename="{filename}"; '
+                f"filename*=UTF-8''{quote(filename)}"
+            )
+        },
     )
