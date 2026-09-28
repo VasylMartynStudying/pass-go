@@ -2,6 +2,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from app.models import EventStatus
+
 
 class EventSummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -84,3 +86,41 @@ class OrganizerMe(BaseModel):
     email: str
     full_name: str
     is_admin: bool
+
+
+class OrganizerEventWrite(BaseModel):
+    title: str = Field(min_length=3, max_length=255)
+    description: str = Field(min_length=10, max_length=5000)
+    starts_at: datetime
+    location: str = Field(min_length=2, max_length=255)
+    capacity: int = Field(ge=1, le=100_000)
+    status: EventStatus = EventStatus.DRAFT
+
+    @field_validator("title", "location")
+    @classmethod
+    def normalize_text(cls, value: str) -> str:
+        return " ".join(value.split())
+
+    @field_validator("description")
+    @classmethod
+    def normalize_description(cls, value: str) -> str:
+        return value.strip()
+
+
+class OrganizerEvent(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    slug: str
+    title: str
+    description: str
+    starts_at: datetime
+    location: str
+    capacity: int
+    status: EventStatus
+    occupied_seats: int
+    available_seats: int
+
+
+class OrganizerEventListResponse(BaseModel):
+    items: list[OrganizerEvent]
+    total: int

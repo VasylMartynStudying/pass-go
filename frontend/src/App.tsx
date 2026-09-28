@@ -5,6 +5,7 @@ import { ProtectedRoute } from '@/components/protected-route'
 import { PublicLayout } from '@/components/public-layout'
 import { EventCatalogPage } from '@/pages/event-catalog-page'
 import { EventDetailPage } from '@/pages/event-detail-page'
+import { OrganizerEventFormPage } from '@/pages/organizer-event-form-page'
 import { OrganizerHomePage } from '@/pages/organizer-home-page'
 import { OrganizerLoginPage } from '@/pages/organizer-login-page'
 import { TicketPage } from '@/pages/ticket-page'
@@ -21,6 +22,11 @@ function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<OrganizerLayout />}>
           <Route path="organizer" element={<OrganizerHomePage />} />
+          <Route path="organizer/events/new" element={<OrganizerEventFormPage />} />
+          <Route
+            path="organizer/events/:slug/edit"
+            element={<OrganizerEventFormPage />}
+          />
         </Route>
       </Route>
     </Routes>

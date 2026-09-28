@@ -55,6 +55,34 @@ export type OrganizerMe = {
   is_admin: boolean
 }
 
+export type EventStatus = 'draft' | 'published' | 'cancelled'
+
+export type OrganizerEvent = {
+  slug: string
+  title: string
+  description: string
+  starts_at: string
+  location: string
+  capacity: number
+  status: EventStatus
+  occupied_seats: number
+  available_seats: number
+}
+
+export type OrganizerEventListResponse = {
+  items: OrganizerEvent[]
+  total: number
+}
+
+export type OrganizerEventPayload = {
+  title: string
+  description: string
+  starts_at: string
+  location: string
+  capacity: number
+  status: EventStatus
+}
+
 export class ApiError extends Error {
   readonly status: number
 
@@ -220,4 +248,46 @@ export async function logoutOrganizer() {
 
 export function getCurrentOrganizer() {
   return apiRequest<OrganizerMe>('/auth/me/', { auth: true })
+}
+
+export function getOrganizerEvents() {
+  return apiRequest<OrganizerEventListResponse>('/organizer/events/', {
+    auth: true,
+  })
+}
+
+export function getOrganizerEvent(slug: string) {
+  return apiRequest<OrganizerEvent>(
+    `/organizer/events/${encodeURIComponent(slug)}/`,
+    { auth: true },
+  )
+}
+
+export function createOrganizerEvent(payload: OrganizerEventPayload) {
+  return apiRequest<OrganizerEvent>('/organizer/events/', {
+    auth: true,
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export function updateOrganizerEvent(
+  slug: string,
+  payload: OrganizerEventPayload,
+) {
+  return apiRequest<OrganizerEvent>(
+    `/organizer/events/${encodeURIComponent(slug)}/`,
+    {
+      auth: true,
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    },
+  )
+}
+
+export function deleteOrganizerEvent(slug: string) {
+  return apiRequest<void>(`/organizer/events/${encodeURIComponent(slug)}/`, {
+    auth: true,
+    method: 'DELETE',
+  })
 }
