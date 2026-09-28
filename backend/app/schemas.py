@@ -141,3 +141,19 @@ class EventDashboardResponse(BaseModel):
     attendees_total: int
     limit: int
     offset: int
+
+
+class CheckInRequest(BaseModel):
+    ticket_token: str = Field(min_length=1, max_length=2000)
+
+    @field_validator("ticket_token")
+    @classmethod
+    def normalize_ticket_token(cls, value: str) -> str:
+        return value.strip()
+
+
+class CheckInResponse(BaseModel):
+    full_name: str
+    event_title: str
+    event_slug: str
+    checked_in_at: datetime

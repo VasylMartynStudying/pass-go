@@ -9,6 +9,7 @@ import { OrganizerEventDashboardPage } from '@/pages/organizer-event-dashboard-p
 import { OrganizerEventFormPage } from '@/pages/organizer-event-form-page'
 import { OrganizerHomePage } from '@/pages/organizer-home-page'
 import { OrganizerLoginPage } from '@/pages/organizer-login-page'
+import { OrganizerScanPage } from '@/pages/organizer-scan-page'
 import { TicketPage } from '@/pages/ticket-page'
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<OrganizerLayout />}>
           <Route path="organizer" element={<OrganizerHomePage />} />
+          <Route path="organizer/scan" element={<OrganizerScanPage />} />
           <Route path="organizer/events/new" element={<OrganizerEventFormPage />} />
           <Route
             path="organizer/events/:slug"

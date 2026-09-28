@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api'
+const API_URL = import.meta.env.VITE_API_URL || '/api'
 
 export type HealthResponse = {
   status: 'ok'
@@ -98,6 +98,13 @@ export type EventDashboardResponse = {
   attendees_total: number
   limit: number
   offset: number
+}
+
+export type CheckInResponse = {
+  full_name: string
+  event_title: string
+  event_slug: string
+  checked_in_at: string
 }
 
 export class ApiError extends Error {
@@ -383,4 +390,12 @@ export async function downloadEventAttendeesCsv(
   link.click()
   link.remove()
   URL.revokeObjectURL(url)
+}
+
+export function checkInAttendee(ticketToken: string) {
+  return apiRequest<CheckInResponse>('/organizer/check-in/', {
+    auth: true,
+    method: 'POST',
+    body: JSON.stringify({ ticket_token: ticketToken }),
+  })
 }

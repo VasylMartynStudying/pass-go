@@ -1,4 +1,4 @@
-import { CalendarCheck, LogOut } from 'lucide-react'
+import { CalendarCheck, LogOut, ScanLine } from 'lucide-react'
 import { Link, Outlet } from 'react-router-dom'
 
 import { Button } from '@/components/ui/button'
@@ -22,6 +22,12 @@ function OrganizerLayout() {
             <p className="hidden text-sm text-muted-foreground sm:block">
               {user?.full_name}
             </p>
+            <Button size="sm" asChild>
+              <Link to="/organizer/scan">
+                <ScanLine className="size-4" aria-hidden="true" />
+                <span className="hidden sm:inline">Сканер</span>
+              </Link>
+            </Button>
             <Button size="sm" variant="outline" asChild>
               <Link to="/">На головну</Link>
             </Button>

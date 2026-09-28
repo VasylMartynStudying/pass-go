@@ -2,6 +2,22 @@ export function ticketQrValue(ticketToken: string) {
   return `${window.location.origin}/tickets/${ticketToken}`
 }
 
+export function parseTicketToken(raw: string) {
+  const text = raw.trim()
+  if (!text) return null
+
+  try {
+    const url = new URL(text)
+    const match = url.pathname.match(/\/tickets\/([^/]+)\/?$/)
+    if (match?.[1]) return decodeURIComponent(match[1])
+  } catch {
+    const match = text.match(/(?:^|\/)tickets\/([^/]+)\/?$/)
+    if (match?.[1]) return decodeURIComponent(match[1])
+  }
+
+  return text
+}
+
 export function downloadQrPng(canvas: HTMLCanvasElement, filename: string) {
   const link = document.createElement('a')
   link.href = canvas.toDataURL('image/png')

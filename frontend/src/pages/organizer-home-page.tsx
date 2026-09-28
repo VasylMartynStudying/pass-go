@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   LoaderCircle,
   Pencil,
+  ScanLine,
   Trash2,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -116,12 +117,20 @@ function OrganizerHomePage() {
             каталозі.
           </p>
         </div>
-        <Button asChild>
-          <Link to="/organizer/events/new">
-            <CalendarPlus className="size-4" aria-hidden="true" />
-            Створити захід
-          </Link>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" asChild>
+            <Link to="/organizer/scan">
+              <ScanLine className="size-4" aria-hidden="true" />
+              Сканер квитків
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link to="/organizer/events/new">
+              <CalendarPlus className="size-4" aria-hidden="true" />
+              Створити захід
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <section className="mt-8">
