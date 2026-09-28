@@ -124,3 +124,20 @@ class OrganizerEvent(BaseModel):
 class OrganizerEventListResponse(BaseModel):
     items: list[OrganizerEvent]
     total: int
+
+
+class Attendee(BaseModel):
+    full_name: str
+    email: str
+    registered_at: datetime
+    checked_in_at: datetime | None
+    is_checked_in: bool
+
+
+class EventDashboardResponse(BaseModel):
+    event: OrganizerEvent
+    checked_in_count: int
+    attendees: list[Attendee]
+    attendees_total: int
+    limit: int
+    offset: int

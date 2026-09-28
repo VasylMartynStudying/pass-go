@@ -1,4 +1,10 @@
-import { CalendarPlus, LoaderCircle, Pencil, Trash2 } from 'lucide-react'
+import {
+  CalendarPlus,
+  LayoutDashboard,
+  LoaderCircle,
+  Pencil,
+  Trash2,
+} from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -160,7 +166,13 @@ function OrganizerHomePage() {
                       {event.occupied_seats} / {event.capacity} місць
                     </p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" asChild>
+                      <Link to={`/organizer/events/${event.slug}`}>
+                        <LayoutDashboard className="size-4" aria-hidden="true" />
+                        Дашборд
+                      </Link>
+                    </Button>
                     <Button size="sm" variant="outline" asChild>
                       <Link to={`/organizer/events/${event.slug}/edit`}>
                         <Pencil className="size-4" aria-hidden="true" />

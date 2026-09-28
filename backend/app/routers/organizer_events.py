@@ -1,14 +1,16 @@
 from datetime import UTC, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import func, select
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.deps import CurrentOrganizer
 from app.models import Event, EventStatus, Organizer, Registration
 from app.schemas import (
+    Attendee,
+    EventDashboardResponse,
     OrganizerEvent,
     OrganizerEventListResponse,
     OrganizerEventWrite,
@@ -64,6 +66,42 @@ def validate_schedule(starts_at: datetime, event_status: EventStatus) -> datetim
             detail="Опублікований захід має починатися в майбутньому.",
         )
     return starts_at
+
+
+def count_checked_in(db: Session, event_id: int) -> int:
+    return (
+        db.scalar(
+            select(func.count(Registration.id)).where(
+                Registration.event_id == event_id,
+                Registration.checked_in_at.is_not(None),
+            )
+        )
+        or 0
+    )
+
+
+def attendee_filters(
+    event_id: int,
+    search: str | None,
+    checked_in: bool | None,
+):
+    filters = [Registration.event_id == event_id]
+    search_term = (search or "").strip()
+    if search_term:
+        normalized = search_term.casefold()
+        filters.append(
+            or_(
+                func.casefold(Registration.full_name).contains(
+                    normalized, autoescape=True
+                ),
+                func.casefold(Registration.email).contains(normalized, autoescape=True),
+            )
+        )
+    if checked_in is True:
+        filters.append(Registration.checked_in_at.is_not(None))
+    elif checked_in is False:
+        filters.append(Registration.checked_in_at.is_(None))
+    return filters
 
 
 def get_owned_event(db: Session, organizer: Organizer, slug: str) -> Event:
@@ -167,3 +205,48 @@ def delete_event(
         )
     db.delete(event)
     db.commit()
+
+
+@router.get("/{slug}/dashboard/", response_model=EventDashboardResponse)
+def get_event_dashboard(
+    slug: str,
+    organizer: CurrentOrganizer,
+    db: DatabaseSession,
+    search: Annotated[str | None, Query(max_length=100)] = None,
+    checked_in: Annotated[bool | None, Query()] = None,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> EventDashboardResponse:
+    event = get_owned_event(db, organizer, slug)
+    occupied = count_registrations(db, event.id)
+    filters = attendee_filters(event.id, search, checked_in)
+    attendees = db.scalars(
+        select(Registration)
+        .where(*filters)
+        .order_by(Registration.created_at.asc(), Registration.id.asc())
+        .limit(limit)
+        .offset(offset)
+    ).all()
+    attendees_total = (
+        db.scalar(select(func.count(Registration.id)).where(*filters)) or 0
+    )
+
+    return EventDashboardResponse(
+        event=to_organizer_event(event, occupied),
+        checked_in_count=count_checked_in(db, event.id),
+        attendees=[
+            Attendee(
+                full_name=item.full_name,
+                email=item.email,
+                registered_at=aware(item.created_at),
+                checked_in_at=(
+                    aware(item.checked_in_at) if item.checked_in_at else None
+                ),
+                is_checked_in=item.checked_in_at is not None,
+            )
+            for item in attendees
+        ],
+        attendees_total=attendees_total,
+        limit=limit,
+        offset=offset,
+    )

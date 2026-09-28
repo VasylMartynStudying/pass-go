@@ -83,6 +83,23 @@ export type OrganizerEventPayload = {
   status: EventStatus
 }
 
+export type Attendee = {
+  full_name: string
+  email: string
+  registered_at: string
+  checked_in_at: string | null
+  is_checked_in: boolean
+}
+
+export type EventDashboardResponse = {
+  event: OrganizerEvent
+  checked_in_count: number
+  attendees: Attendee[]
+  attendees_total: number
+  limit: number
+  offset: number
+}
+
 export class ApiError extends Error {
   readonly status: number
 
@@ -290,4 +307,27 @@ export function deleteOrganizerEvent(slug: string) {
     auth: true,
     method: 'DELETE',
   })
+}
+
+export function getEventDashboard(
+  slug: string,
+  params?: {
+    search?: string
+    checkedIn?: 'all' | 'yes' | 'no'
+    offset?: number
+    limit?: number
+  },
+) {
+  const query = new URLSearchParams()
+  if (params?.search) query.set('search', params.search)
+  if (params?.checkedIn === 'yes') query.set('checked_in', 'true')
+  if (params?.checkedIn === 'no') query.set('checked_in', 'false')
+  if (params?.offset) query.set('offset', String(params.offset))
+  if (params?.limit) query.set('limit', String(params.limit))
+  const suffix = query.size ? `?${query.toString()}` : ''
+
+  return apiRequest<EventDashboardResponse>(
+    `/organizer/events/${encodeURIComponent(slug)}/dashboard/${suffix}`,
+    { auth: true },
+  )
 }
