@@ -7,7 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Event, EventStatus, Registration
+from app.models import Event, EventStatus, ModerationStatus, Registration
 from app.schemas import (
     EventDetail,
     EventListResponse,
@@ -31,6 +31,7 @@ occupied_seats_expr = (
 def public_event_filters():
     return [
         Event.status == EventStatus.PUBLISHED,
+        Event.moderation_status == ModerationStatus.APPROVED,
         Event.starts_at > datetime.now(UTC),
     ]
 
@@ -128,7 +129,11 @@ def register_for_event(
     db: DatabaseSession,
 ) -> RegistrationResponse:
     event = db.scalar(select(Event).where(Event.slug == slug).with_for_update())
-    if event is None or event.status != EventStatus.PUBLISHED:
+    if (
+        event is None
+        or event.status != EventStatus.PUBLISHED
+        or event.moderation_status != ModerationStatus.APPROVED
+    ):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Захід не знайдено.",

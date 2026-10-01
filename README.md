@@ -30,6 +30,8 @@ poetry run python scripts/seed.py
 ```
 
 Вхід організатора: `organizer@example.com` / `secret123`.
+Адмін-панель SQLAdmin: `http://localhost:8000/admin`,
+`admin@example.com` / `secret123`.
 
 Корисні команди:
 

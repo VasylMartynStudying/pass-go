@@ -59,10 +59,8 @@ def login(
     db: DatabaseSession,
 ) -> TokenResponse:
     organizer = db.scalar(select(Organizer).where(Organizer.email == payload.email))
-    if (
-        organizer is None
-        or not organizer.is_active
-        or not verify_password(payload.password, organizer.hashed_password)
+    if organizer is None or not verify_password(
+        payload.password, organizer.hashed_password
     ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -93,7 +91,7 @@ def refresh_access_token(
         ) from None
 
     organizer = db.scalar(select(Organizer).where(Organizer.id == int(payload["sub"])))
-    if organizer is None or not organizer.is_active:
+    if organizer is None:
         clear_refresh_cookie(response)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -113,5 +111,4 @@ def read_current_organizer(organizer: CurrentOrganizer) -> OrganizerMe:
         id=organizer.id,
         email=organizer.email,
         full_name=organizer.full_name,
-        is_admin=organizer.is_admin,
     )

@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from app.models import EventStatus
+from app.models import EventStatus, ModerationStatus
 
 
 class EventSummary(BaseModel):
@@ -85,7 +85,6 @@ class OrganizerMe(BaseModel):
     id: int
     email: str
     full_name: str
-    is_admin: bool
 
 
 class OrganizerEventWrite(BaseModel):
@@ -117,6 +116,8 @@ class OrganizerEvent(BaseModel):
     location: str
     capacity: int
     status: EventStatus
+    moderation_status: ModerationStatus
+    moderation_comment: str | None
     occupied_seats: int
     available_seats: int
 

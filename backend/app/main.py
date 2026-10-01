@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.admin import setup_admin
 from app.config import get_settings
 from app.routers.auth import router as auth_router
 from app.routers.check_in import router as check_in_router
@@ -32,3 +33,4 @@ app.include_router(check_in_router, prefix=settings.api_prefix)
 app.include_router(events_router, prefix=settings.api_prefix)
 app.include_router(organizer_events_router, prefix=settings.api_prefix)
 app.include_router(tickets_router, prefix=settings.api_prefix)
+setup_admin(app)

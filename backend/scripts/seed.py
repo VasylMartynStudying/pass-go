@@ -9,30 +9,65 @@ if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
 from app.database import SessionLocal  # noqa: E402
-from app.models import Event, EventStatus, Organizer, Registration  # noqa: E402
+from app.models import (  # noqa: E402
+    AdminUser,
+    Event,
+    EventStatus,
+    ModerationStatus,
+    Organizer,
+    Registration,
+)
 from app.security import hash_password  # noqa: E402
 
 ORGANIZER_EMAIL = "organizer@example.com"
 ORGANIZER_PASSWORD = "secret123"
+ADMIN_EMAIL = "admin@example.com"
+ADMIN_PASSWORD = "secret123"
 
 
-def get_or_create_organizer(session) -> Organizer:
-    organizer = session.scalar(
-        select(Organizer).where(Organizer.email == ORGANIZER_EMAIL)
-    )
+def get_or_create_organizer(
+    session,
+    *,
+    email: str,
+    password: str,
+    full_name: str,
+) -> Organizer:
+    organizer = session.scalar(select(Organizer).where(Organizer.email == email))
     if organizer is None:
         organizer = Organizer(
-            email=ORGANIZER_EMAIL,
-            full_name="Тестовий організатор",
-            hashed_password=hash_password(ORGANIZER_PASSWORD),
-            is_active=True,
+            email=email,
+            full_name=full_name,
+            hashed_password=hash_password(password),
         )
         session.add(organizer)
         session.flush()
-        print(f"Created organizer {ORGANIZER_EMAIL} / {ORGANIZER_PASSWORD}")
+        print(f"Created organizer {email} / {password}")
     else:
-        print(f"Organizer already exists: {ORGANIZER_EMAIL}")
+        print(f"Organizer already exists: {email}")
     return organizer
+
+
+def get_or_create_admin(
+    session,
+    *,
+    email: str,
+    password: str,
+    full_name: str,
+) -> AdminUser:
+    admin = session.scalar(select(AdminUser).where(AdminUser.email == email))
+    if admin is None:
+        admin = AdminUser(
+            email=email,
+            full_name=full_name,
+            hashed_password=hash_password(password),
+        )
+        session.add(admin)
+        session.flush()
+        print(f"Created admin {email} / {password}")
+    else:
+        admin.full_name = full_name
+        print(f"Admin already exists: {email}")
+    return admin
 
 
 def get_or_create_event(session, organizer: Organizer, **fields) -> Event:
@@ -43,7 +78,9 @@ def get_or_create_event(session, organizer: Organizer, **fields) -> Event:
         session.flush()
         print(f"Created event /{fields['slug']}")
     else:
-        print(f"Event already exists: /{fields['slug']}")
+        for key, value in fields.items():
+            setattr(event, key, value)
+        print(f"Updated event /{fields['slug']}")
     return event
 
 
@@ -67,7 +104,18 @@ def seed() -> None:
     now = datetime.now(UTC)
 
     with SessionLocal() as session:
-        organizer = get_or_create_organizer(session)
+        organizer = get_or_create_organizer(
+            session,
+            email=ORGANIZER_EMAIL,
+            password=ORGANIZER_PASSWORD,
+            full_name="Тестовий організатор",
+        )
+        get_or_create_admin(
+            session,
+            email=ADMIN_EMAIL,
+            password=ADMIN_PASSWORD,
+            full_name="PassGo Admin",
+        )
 
         python_meetup = get_or_create_event(
             session,
@@ -79,6 +127,7 @@ def seed() -> None:
             location="Київ, вул. Хрещатик 1",
             capacity=50,
             status=EventStatus.PUBLISHED,
+            moderation_status=ModerationStatus.APPROVED,
         )
         get_or_create_event(
             session,
@@ -92,6 +141,7 @@ def seed() -> None:
             location="Львів, пл. Ринок 1",
             capacity=80,
             status=EventStatus.PUBLISHED,
+            moderation_status=ModerationStatus.APPROVED,
         )
         get_or_create_event(
             session,
@@ -107,6 +157,18 @@ def seed() -> None:
         get_or_create_event(
             session,
             organizer,
+            title="Захід на модерації",
+            slug="pending-review",
+            description="Опубліковано організатором і чекає схвалення адміністратора.",
+            starts_at=now + timedelta(days=10),
+            location="Дніпро",
+            capacity=40,
+            status=EventStatus.PUBLISHED,
+            moderation_status=ModerationStatus.PENDING,
+        )
+        get_or_create_event(
+            session,
+            organizer,
             title="Минула конференція",
             slug="past-conference",
             description="Цей захід уже відбувся і не має з’явитися в каталозі.",
@@ -114,6 +176,7 @@ def seed() -> None:
             location="Харків",
             capacity=100,
             status=EventStatus.PUBLISHED,
+            moderation_status=ModerationStatus.APPROVED,
         )
 
         get_or_create_registration(

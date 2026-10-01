@@ -34,7 +34,7 @@ def get_current_organizer(
         ) from None
 
     organizer = db.scalar(select(Organizer).where(Organizer.id == int(payload["sub"])))
-    if organizer is None or not organizer.is_active:
+    if organizer is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Обліковий запис організатора недоступний.",

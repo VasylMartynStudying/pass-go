@@ -7,9 +7,17 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
-from app.database import Base, get_db, register_sqlite_functions
+from app.database import (
+    Base,
+    SessionLocal,
+    get_db,
+    register_sqlite_functions,
+)
+from app.database import (
+    engine as app_engine,
+)
 from app.main import app
-from app.models import Event, EventStatus, Organizer
+from app.models import AdminUser, Event, EventStatus, ModerationStatus, Organizer
 from app.security import hash_password
 
 test_engine = create_engine(
@@ -23,12 +31,14 @@ event.listen(test_engine, "connect", register_sqlite_functions)
 @pytest.fixture(autouse=True)
 def database() -> Generator[Session]:
     Base.metadata.create_all(test_engine)
+    SessionLocal.configure(bind=test_engine)
 
     with Session(test_engine) as session:
         app.dependency_overrides[get_db] = lambda: session
         yield session
 
     app.dependency_overrides.clear()
+    SessionLocal.configure(bind=app_engine)
     Base.metadata.drop_all(test_engine)
 
 
@@ -43,17 +53,31 @@ def create_organizer(
     *,
     email: str = "organizer@example.com",
     password: str | None = None,
-    is_active: bool = True,
 ) -> Organizer:
     organizer = Organizer(
         email=email,
         full_name="Test Organizer",
         hashed_password=hash_password(password) if password else "not-used-yet",
-        is_active=is_active,
     )
     session.add(organizer)
     session.flush()
     return organizer
+
+
+def create_admin(
+    session: Session,
+    *,
+    email: str = "admin@example.com",
+    password: str = "secret123",
+) -> AdminUser:
+    admin = AdminUser(
+        email=email,
+        full_name="Test Admin",
+        hashed_password=hash_password(password),
+    )
+    session.add(admin)
+    session.flush()
+    return admin
 
 
 def create_event(
@@ -63,6 +87,8 @@ def create_event(
     slug: str,
     title: str,
     status: EventStatus = EventStatus.PUBLISHED,
+    moderation_status: ModerationStatus = ModerationStatus.APPROVED,
+    moderation_comment: str | None = None,
     starts_at: datetime | None = None,
     location: str = "Київ",
     capacity: int = 50,
@@ -76,6 +102,8 @@ def create_event(
         location=location,
         capacity=capacity,
         status=status,
+        moderation_status=moderation_status,
+        moderation_comment=moderation_comment,
     )
     session.add(event)
     session.commit()

@@ -149,6 +149,10 @@ function EventForm({ event, submitLabel, onSubmit }: EventFormProps) {
             </option>
           ))}
         </select>
+        <p className="text-sm text-muted-foreground">
+          Опублікований захід з’явиться в каталозі лише після схвалення
+          адміністратора.
+        </p>
       </div>
 
       {event && (

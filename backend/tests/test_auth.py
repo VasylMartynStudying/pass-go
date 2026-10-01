@@ -44,17 +44,6 @@ def test_login_rejects_invalid_credentials(
     assert response.json()["detail"] == "Невірний email або пароль."
 
 
-def test_login_rejects_inactive_organizer(
-    client: TestClient, database: Session
-) -> None:
-    create_organizer(database, password="secret123", is_active=False)
-    database.commit()
-
-    response = login(client)
-
-    assert response.status_code == 401
-
-
 def test_me_requires_access_token(client: TestClient) -> None:
     response = client.get("/api/auth/me/")
 

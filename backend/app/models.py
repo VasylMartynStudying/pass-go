@@ -5,7 +5,6 @@ from enum import StrEnum
 from uuid import uuid4
 
 from sqlalchemy import (
-    Boolean,
     CheckConstraint,
     DateTime,
     Enum,
@@ -30,6 +29,12 @@ class EventStatus(StrEnum):
     CANCELLED = "cancelled"
 
 
+class ModerationStatus(StrEnum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
+
 class Organizer(Base):
     __tablename__ = "organizers"
 
@@ -37,8 +42,6 @@ class Organizer(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     full_name: Mapped[str] = mapped_column(String(255))
     hashed_password: Mapped[str] = mapped_column(String(255))
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utc_now
     )
@@ -47,6 +50,27 @@ class Organizer(Base):
     )
 
     events: Mapped[list[Event]] = relationship(back_populates="owner")
+
+    def __str__(self) -> str:
+        return self.full_name or self.email
+
+
+class AdminUser(Base):
+    __tablename__ = "admins"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    full_name: Mapped[str] = mapped_column(String(255))
+    hashed_password: Mapped[str] = mapped_column(String(255))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now
+    )
+
+    def __str__(self) -> str:
+        return self.full_name or self.email
 
 
 class Event(Base):
@@ -70,6 +94,12 @@ class Event(Base):
         default=EventStatus.DRAFT,
         index=True,
     )
+    moderation_status: Mapped[ModerationStatus] = mapped_column(
+        Enum(ModerationStatus, native_enum=False, length=20),
+        default=ModerationStatus.PENDING,
+        index=True,
+    )
+    moderation_comment: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utc_now
     )
@@ -79,6 +109,9 @@ class Event(Base):
 
     owner: Mapped[Organizer] = relationship(back_populates="events")
     registrations: Mapped[list[Registration]] = relationship(back_populates="event")
+
+    def __str__(self) -> str:
+        return self.title
 
 
 class Registration(Base):
@@ -107,3 +140,6 @@ class Registration(Base):
     )
 
     event: Mapped[Event] = relationship(back_populates="registrations")
+
+    def __str__(self) -> str:
+        return self.email

@@ -21,6 +21,7 @@ import {
   type EventStatus,
 } from '@/lib/api'
 import { formatEventDate } from '@/lib/date'
+import { catalogVisibilityHint } from '@/lib/moderation'
 
 const PAGE_SIZE = 20
 
@@ -199,10 +200,17 @@ function OrganizerEventDashboardPage() {
             {event?.title ?? 'Завантажуємо…'}
           </h1>
           {event && (
-            <p className="mt-3 max-w-2xl text-muted-foreground">
-              {statusLabels[event.status]} · {formatEventDate(event.starts_at)} ·{' '}
-              {event.location}
-            </p>
+            <>
+              <p className="mt-3 max-w-2xl text-muted-foreground">
+                {statusLabels[event.status]} · {formatEventDate(event.starts_at)} ·{' '}
+                {event.location}
+              </p>
+              {catalogVisibilityHint(event) && (
+                <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                  {catalogVisibilityHint(event)}
+                </p>
+              )}
+            </>
           )}
         </div>
         {event && (

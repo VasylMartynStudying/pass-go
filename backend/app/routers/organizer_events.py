@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.deps import CurrentOrganizer
-from app.models import Event, EventStatus, Organizer, Registration
+from app.models import Event, EventStatus, ModerationStatus, Organizer, Registration
 from app.schemas import (
     Attendee,
     EventDashboardResponse,
@@ -48,6 +48,8 @@ def to_organizer_event(event: Event, occupied_seats: int) -> OrganizerEvent:
         location=event.location,
         capacity=event.capacity,
         status=event.status,
+        moderation_status=event.moderation_status,
+        moderation_comment=event.moderation_comment,
         occupied_seats=occupied_seats,
         available_seats=max(event.capacity - occupied_seats, 0),
     )
@@ -60,6 +62,22 @@ def count_registrations(db: Session, event_id: int) -> int:
         )
         or 0
     )
+
+
+def next_moderation(
+    event: Event | None, new_status: EventStatus
+) -> tuple[ModerationStatus, str | None]:
+    if new_status != EventStatus.PUBLISHED:
+        if event is None:
+            return ModerationStatus.PENDING, None
+        return event.moderation_status, event.moderation_comment
+    if (
+        event is not None
+        and event.status == EventStatus.PUBLISHED
+        and event.moderation_status == ModerationStatus.APPROVED
+    ):
+        return ModerationStatus.APPROVED, event.moderation_comment
+    return ModerationStatus.PENDING, None
 
 
 def validate_schedule(starts_at: datetime, event_status: EventStatus) -> datetime:
@@ -143,6 +161,7 @@ def create_event(
     db: DatabaseSession,
 ) -> OrganizerEvent:
     starts_at = validate_schedule(payload.starts_at, payload.status)
+    moderation_status, moderation_comment = next_moderation(None, payload.status)
     event = Event(
         owner_id=organizer.id,
         title=payload.title,
@@ -152,6 +171,8 @@ def create_event(
         location=payload.location,
         capacity=payload.capacity,
         status=payload.status,
+        moderation_status=moderation_status,
+        moderation_comment=moderation_comment,
     )
     db.add(event)
     db.commit()
@@ -189,6 +210,9 @@ def update_event(
     event.starts_at = validate_schedule(payload.starts_at, payload.status)
     event.location = payload.location
     event.capacity = payload.capacity
+    event.moderation_status, event.moderation_comment = next_moderation(
+        event, payload.status
+    )
     event.status = payload.status
     db.commit()
     db.refresh(event)

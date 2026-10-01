@@ -52,10 +52,11 @@ export type OrganizerMe = {
   id: number
   email: string
   full_name: string
-  is_admin: boolean
 }
 
 export type EventStatus = 'draft' | 'published' | 'cancelled'
+
+export type ModerationStatus = 'pending' | 'approved' | 'rejected'
 
 export type OrganizerEvent = {
   slug: string
@@ -65,6 +66,8 @@ export type OrganizerEvent = {
   location: string
   capacity: number
   status: EventStatus
+  moderation_status: ModerationStatus
+  moderation_comment: string | null
   occupied_seats: number
   available_seats: number
 }

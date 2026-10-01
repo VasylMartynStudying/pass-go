@@ -21,6 +21,7 @@ import {
 } from '@/lib/api'
 import { useAuth } from '@/lib/auth-context'
 import { formatEventDate } from '@/lib/date'
+import { catalogVisibilityHint, moderationLabels } from '@/lib/moderation'
 
 const statusLabels: Record<EventStatus, string> = {
   draft: 'Чернетка',
@@ -160,12 +161,17 @@ function OrganizerHomePage() {
 
         {list.status === 'success' && list.events.length > 0 && (
           <div className="grid gap-4">
-            {list.events.map((event) => (
+            {list.events.map((event) => {
+              const visibilityHint = catalogVisibilityHint(event)
+              return (
               <Card key={event.slug}>
                 <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                       {statusLabels[event.status]}
+                      {event.status === 'published'
+                        ? ` · ${moderationLabels[event.moderation_status]}`
+                        : ''}
                     </p>
                     <CardTitle className="mt-1 text-xl">{event.title}</CardTitle>
                     <p className="mt-2 text-sm text-muted-foreground">
@@ -174,6 +180,11 @@ function OrganizerHomePage() {
                     <p className="mt-1 text-sm text-muted-foreground">
                       {event.occupied_seats} / {event.capacity} місць
                     </p>
+                    {visibilityHint ? (
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        {visibilityHint}
+                      </p>
+                    ) : null}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Button size="sm" asChild>
@@ -202,7 +213,8 @@ function OrganizerHomePage() {
                   </div>
                 </CardHeader>
               </Card>
-            ))}
+              )
+            })}
           </div>
         )}
       </section>

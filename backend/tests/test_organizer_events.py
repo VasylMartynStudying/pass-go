@@ -3,7 +3,7 @@ from datetime import UTC, datetime, timedelta
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.models import Registration
+from app.models import ModerationStatus, Registration
 from tests.conftest import create_event, create_organizer
 
 
@@ -58,6 +58,7 @@ def test_create_event_generates_slug(client: TestClient, database: Session) -> N
     assert response.status_code == 201
     assert response.json()["slug"] == "novyi-python-meetup"
     assert response.json()["status"] == "published"
+    assert response.json()["moderation_status"] == "pending"
 
 
 def test_cannot_update_another_organizer_event(
@@ -143,3 +144,27 @@ def test_delete_own_event_without_registrations(
     assert response.status_code == 204
     listing = client.get("/api/organizer/events/", headers=auth_headers(client))
     assert listing.json()["total"] == 0
+
+
+def test_publishing_resubmits_rejected_event(
+    client: TestClient, database: Session
+) -> None:
+    owner = create_organizer(database, password="secret123")
+    create_event(
+        database,
+        owner,
+        slug="rejected-show",
+        title="Відхилений захід",
+        moderation_status=ModerationStatus.REJECTED,
+        moderation_comment="Потрібен точніший опис.",
+    )
+
+    response = client.put(
+        "/api/organizer/events/rejected-show/",
+        headers=auth_headers(client),
+        json=event_payload(title="Відхилений захід"),
+    )
+
+    assert response.status_code == 200
+    assert response.json()["moderation_status"] == "pending"
+    assert response.json()["moderation_comment"] is None
