@@ -1,5 +1,6 @@
 import { LoaderCircle } from 'lucide-react'
 import { type FormEvent, useState } from 'react'
+import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -35,6 +36,9 @@ function RegistrationForm({ event, onRegistered }: RegistrationFormProps) {
         full_name: fullName,
         email,
       })
+      toast.success('Реєстрацію завершено', {
+        description: `Квиток на «${registration.event_title}» готовий.`,
+      })
       onRegistered(registration)
     } catch (caught) {
       setError(
@@ -56,7 +60,7 @@ function RegistrationForm({ event, onRegistered }: RegistrationFormProps) {
   }
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
+    <form className="space-y-4" noValidate onSubmit={handleSubmit}>
       <div className="space-y-2">
         <label className="text-sm font-medium" htmlFor="full-name">
           Ім’я та прізвище
@@ -67,6 +71,8 @@ function RegistrationForm({ event, onRegistered }: RegistrationFormProps) {
           autoComplete="name"
           minLength={2}
           required
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? 'registration-error' : undefined}
           value={fullName}
           onChange={(event) => setFullName(event.target.value)}
         />
@@ -82,18 +88,20 @@ function RegistrationForm({ event, onRegistered }: RegistrationFormProps) {
           type="email"
           autoComplete="email"
           required
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? 'registration-error' : undefined}
           value={email}
           onChange={(event) => setEmail(event.target.value)}
         />
       </div>
 
       {error && (
-        <p className="text-sm text-destructive" role="alert">
+        <p className="text-sm text-destructive" id="registration-error" role="alert">
           {error}
         </p>
       )}
 
-      <Button className="w-full" disabled={isSubmitting} type="submit">
+      <Button className="w-full" disabled={isSubmitting} aria-busy={isSubmitting} type="submit">
         {isSubmitting ? (
           <>
             <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />

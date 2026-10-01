@@ -65,15 +65,19 @@ function EventForm({ event, submitLabel, onSubmit }: EventFormProps) {
   }
 
   return (
-    <form className="space-y-5" onSubmit={handleSubmit}>
+    <form className="space-y-5" noValidate onSubmit={handleSubmit}>
       <div className="space-y-2">
         <label className="text-sm font-medium" htmlFor="title">
           Назва
         </label>
         <Input
           id="title"
+          name="title"
+          autoComplete="off"
           minLength={3}
           required
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? 'event-form-error' : undefined}
           value={title}
           onChange={(event) => setTitle(event.target.value)}
         />
@@ -85,8 +89,11 @@ function EventForm({ event, submitLabel, onSubmit }: EventFormProps) {
         </label>
         <Textarea
           id="description"
+          name="description"
           minLength={10}
           required
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? 'event-form-error' : undefined}
           value={description}
           onChange={(event) => setDescription(event.target.value)}
         />
@@ -99,6 +106,7 @@ function EventForm({ event, submitLabel, onSubmit }: EventFormProps) {
           </label>
           <Input
             id="starts-at"
+            name="starts_at"
             type="datetime-local"
             required
             value={startsAt}
@@ -111,6 +119,7 @@ function EventForm({ event, submitLabel, onSubmit }: EventFormProps) {
           </label>
           <Input
             id="capacity"
+            name="capacity"
             min={event?.occupied_seats ?? 1}
             required
             type="number"
@@ -126,6 +135,8 @@ function EventForm({ event, submitLabel, onSubmit }: EventFormProps) {
         </label>
         <Input
           id="location"
+          name="location"
+          autoComplete="street-address"
           minLength={2}
           required
           value={location}
@@ -139,6 +150,8 @@ function EventForm({ event, submitLabel, onSubmit }: EventFormProps) {
         </label>
         <select
           id="status"
+          name="status"
+          aria-describedby="status-hint"
           className="h-10 w-full rounded-md border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
           value={status}
           onChange={(event) => setStatus(event.target.value as EventStatus)}
@@ -149,7 +162,7 @@ function EventForm({ event, submitLabel, onSubmit }: EventFormProps) {
             </option>
           ))}
         </select>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground" id="status-hint">
           Опублікований захід з’явиться в каталозі лише після схвалення
           адміністратора.
         </p>
@@ -163,13 +176,13 @@ function EventForm({ event, submitLabel, onSubmit }: EventFormProps) {
       )}
 
       {error && (
-        <p className="text-sm text-destructive" role="alert">
+        <p className="text-sm text-destructive" id="event-form-error" role="alert">
           {error}
         </p>
       )}
 
       <div className="flex gap-3">
-        <Button disabled={isSubmitting} type="submit">
+        <Button disabled={isSubmitting} aria-busy={isSubmitting} type="submit">
           {isSubmitting ? (
             <>
               <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />

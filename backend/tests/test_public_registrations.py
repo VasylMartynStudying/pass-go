@@ -40,6 +40,19 @@ def test_registers_participant_and_updates_available_seats(
     assert details.json()["available_seats"] == 49
 
 
+def test_invalid_registration_returns_string_detail(
+    client: TestClient, database: Session
+) -> None:
+    organizer = create_organizer(database)
+    create_event(database, organizer, slug="future", title="Майбутня подія")
+
+    response = register(client, full_name="A", email="not-an-email")
+
+    assert response.status_code == 422
+    assert isinstance(response.json()["detail"], str)
+    assert response.json()["detail"]
+
+
 def test_rejects_duplicate_email(client: TestClient, database: Session) -> None:
     organizer = create_organizer(database)
     create_event(database, organizer, slug="future", title="Майбутня подія")

@@ -5,6 +5,8 @@ import { ProtectedRoute } from '@/components/protected-route'
 import { PublicLayout } from '@/components/public-layout'
 import { EventCatalogPage } from '@/pages/event-catalog-page'
 import { EventDetailPage } from '@/pages/event-detail-page'
+import { ForbiddenPage } from '@/pages/forbidden-page'
+import { NotFoundPage } from '@/pages/not-found-page'
 import { OrganizerEventDashboardPage } from '@/pages/organizer-event-dashboard-page'
 import { OrganizerEventFormPage } from '@/pages/organizer-event-form-page'
 import { OrganizerHomePage } from '@/pages/organizer-home-page'
@@ -19,6 +21,8 @@ function App() {
         <Route index element={<EventCatalogPage />} />
         <Route path="events/:slug" element={<EventDetailPage />} />
         <Route path="tickets/:ticketToken" element={<TicketPage />} />
+        <Route path="403" element={<ForbiddenPage />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Route>
       <Route path="organizer/login" element={<OrganizerLoginPage />} />
       <Route element={<ProtectedRoute />}>
@@ -34,6 +38,7 @@ function App() {
             path="organizer/events/:slug/edit"
             element={<OrganizerEventFormPage />}
           />
+          <Route path="organizer/*" element={<NotFoundPage />} />
         </Route>
       </Route>
     </Routes>

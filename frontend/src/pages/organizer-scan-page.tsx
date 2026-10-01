@@ -99,7 +99,7 @@ function OrganizerScanPage() {
               Квиток не прийнято
             </CardTitle>
           </CardHeader>
-          <CardContent aria-live="assertive">
+          <CardContent aria-live="assertive" id="scan-error">
             <p>{result.message}</p>
           </CardContent>
         </Card>
@@ -148,10 +148,14 @@ function OrganizerScanPage() {
         <Input
           id="ticket"
           name="ticket"
+          autoComplete="off"
+          inputMode="url"
           placeholder="https://…/tickets/…"
           disabled={isSubmitting}
+          aria-invalid={result?.kind === 'error'}
+          aria-describedby={result?.kind === 'error' ? 'scan-error' : undefined}
         />
-        <Button type="submit" variant="outline" disabled={isSubmitting}>
+        <Button type="submit" variant="outline" disabled={isSubmitting} aria-busy={isSubmitting}>
           Перевірити
         </Button>
       </form>

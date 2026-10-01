@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.admin import setup_admin
 from app.config import get_settings
+from app.errors import register_error_handlers
 from app.routers.auth import router as auth_router
 from app.routers.check_in import router as check_in_router
 from app.routers.events import router as events_router
@@ -18,6 +19,7 @@ app = FastAPI(
     docs_url="/docs" if settings.environment != "production" else None,
     redoc_url="/redoc" if settings.environment != "production" else None,
 )
+register_error_handlers(app)
 
 app.add_middleware(
     CORSMiddleware,

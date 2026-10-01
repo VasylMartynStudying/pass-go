@@ -1,10 +1,10 @@
 import { LoaderCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 
 import { EventForm } from '@/components/event-form'
-import { Button } from '@/components/ui/button'
+import { StatusPage } from '@/components/status-page'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   createOrganizerEvent,
@@ -69,15 +69,12 @@ function OrganizerEventFormPage() {
 
   if (loadState === 'error') {
     return (
-      <main className="mx-auto max-w-xl px-4 py-12 text-center">
-        <h1 className="text-2xl font-semibold">Захід не знайдено</h1>
-        <p className="mt-3 text-muted-foreground">
-          Можливо, це чужа подія або її вже видалено.
-        </p>
-        <Button className="mt-6" variant="outline" asChild>
-          <Link to="/organizer">До моїх заходів</Link>
-        </Button>
-      </main>
+      <StatusPage
+        title="Захід не знайдено"
+        description="Можливо, це чужа подія або її вже видалено."
+        actionTo="/organizer"
+        actionLabel="До моїх заходів"
+      />
     )
   }
 

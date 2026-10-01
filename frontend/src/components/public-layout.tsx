@@ -9,7 +9,7 @@ function PublicLayout() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+        <div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-3 px-4 py-2 sm:px-6">
           <Link className="flex items-center gap-2 font-semibold" to="/">
             <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <CalendarCheck className="size-5" aria-hidden="true" />
@@ -17,7 +17,7 @@ function PublicLayout() {
             <span>PassGo</span>
           </Link>
           <Link
-            className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            className="shrink-0 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
             to={user ? '/organizer' : '/organizer/login'}
           >
             {user ? 'Кабінет організатора' : 'Для організаторів'}

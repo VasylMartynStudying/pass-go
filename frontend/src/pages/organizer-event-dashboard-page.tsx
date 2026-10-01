@@ -10,6 +10,7 @@ import { type FormEvent, useEffect, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 
+import { StatusPage } from '@/components/status-page'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -36,6 +37,7 @@ type CheckInFilter = 'all' | 'yes' | 'no'
 type DashboardState =
   | { status: 'loading'; requestKey: string }
   | { status: 'not-found'; requestKey: string }
+  | { status: 'forbidden'; requestKey: string }
   | { status: 'error'; requestKey: string; message: string }
   | { status: 'success'; requestKey: string; data: EventDashboardResponse }
 
@@ -81,6 +83,10 @@ function OrganizerEventDashboardPage() {
         if (ignore) return
         if (error instanceof ApiError && error.status === 404) {
           setDashboard({ status: 'not-found', requestKey })
+          return
+        }
+        if (error instanceof ApiError && error.status === 403) {
+          setDashboard({ status: 'forbidden', requestKey })
           return
         }
         setDashboard({
@@ -156,15 +162,23 @@ function OrganizerEventDashboardPage() {
 
   if (!isLoading && dashboard.status === 'not-found') {
     return (
-      <main className="mx-auto max-w-xl px-4 py-12 text-center">
-        <h1 className="text-2xl font-semibold">Захід не знайдено</h1>
-        <p className="mt-3 text-muted-foreground">
-          Можливо, це чужа подія або її вже видалено.
-        </p>
-        <Button className="mt-6" variant="outline" asChild>
-          <Link to="/organizer">До моїх заходів</Link>
-        </Button>
-      </main>
+      <StatusPage
+        title="Захід не знайдено"
+        description="Можливо, це чужа подія або її вже видалено."
+        actionTo="/organizer"
+        actionLabel="До моїх заходів"
+      />
+    )
+  }
+
+  if (!isLoading && dashboard.status === 'forbidden') {
+    return (
+      <StatusPage
+        title="Немає доступу"
+        description="Цей захід доступний лише його організатору."
+        actionTo="/organizer"
+        actionLabel="До моїх заходів"
+      />
     )
   }
 

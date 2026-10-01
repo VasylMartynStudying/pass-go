@@ -60,16 +60,19 @@ function OrganizerLoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form className="space-y-4" onSubmit={handleSubmit}>
+          <form className="space-y-4" noValidate onSubmit={handleSubmit}>
             <div className="space-y-2">
               <label className="text-sm font-medium" htmlFor="email">
                 Email
               </label>
               <Input
                 id="email"
+                name="email"
                 type="email"
                 autoComplete="email"
                 required
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? 'login-error' : undefined}
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
               />
@@ -80,21 +83,24 @@ function OrganizerLoginPage() {
               </label>
               <Input
                 id="password"
+                name="password"
                 type="password"
                 autoComplete="current-password"
                 required
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? 'login-error' : undefined}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
               />
             </div>
 
             {error && (
-              <p className="text-sm text-destructive" role="alert">
+              <p className="text-sm text-destructive" id="login-error" role="alert">
                 {error}
               </p>
             )}
 
-            <Button className="w-full" disabled={isSubmitting} type="submit">
+            <Button className="w-full" disabled={isSubmitting} aria-busy={isSubmitting} type="submit">
               {isSubmitting ? (
                 <>
                   <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />

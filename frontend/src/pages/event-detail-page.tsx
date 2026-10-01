@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { RegistrationForm } from '@/components/registration-form'
+import { StatusPage } from '@/components/status-page'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ApiError, getEvent, type EventDetail } from '@/lib/api'
@@ -61,19 +62,15 @@ function EventDetailPage() {
 
   if (state.status === 'not-found' || state.status === 'error') {
     return (
-      <main className="mx-auto flex min-h-[60vh] max-w-xl flex-col items-center justify-center px-4 text-center">
-        <h1 className="text-2xl font-semibold">
-          {state.status === 'not-found'
+      <StatusPage
+        title={
+          state.status === 'not-found'
             ? 'Захід не знайдено'
-            : 'Не вдалося завантажити захід'}
-        </h1>
-        <p className="mt-3 text-muted-foreground">
-          Він міг завершитися, бути знятим із публікації або тимчасово недоступний.
-        </p>
-        <Button className="mt-6" variant="outline" asChild>
-          <Link to="/">Повернутися до каталогу</Link>
-        </Button>
-      </main>
+            : 'Не вдалося завантажити захід'
+        }
+        description="Він міг завершитися, бути знятим із публікації або тимчасово недоступний."
+        actionLabel="Повернутися до каталогу"
+      />
     )
   }
 

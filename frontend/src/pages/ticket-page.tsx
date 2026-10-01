@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { QRCodeCanvas } from 'qrcode.react'
 
+import { StatusPage } from '@/components/status-page'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { ApiError, getTicket, type TicketResponse } from '@/lib/api'
@@ -53,19 +54,15 @@ function TicketPage() {
 
   if (state.status === 'not-found' || state.status === 'error') {
     return (
-      <main className="mx-auto flex min-h-[60vh] max-w-xl flex-col items-center justify-center px-4 text-center">
-        <h1 className="text-2xl font-semibold">
-          {state.status === 'not-found'
+      <StatusPage
+        title={
+          state.status === 'not-found'
             ? 'Квиток не знайдено'
-            : 'Не вдалося завантажити квиток'}
-        </h1>
-        <p className="mt-3 text-muted-foreground">
-          Перевірте посилання або зареєструйтеся на захід ще раз.
-        </p>
-        <Button className="mt-6" variant="outline" asChild>
-          <Link to="/">До каталогу</Link>
-        </Button>
-      </main>
+            : 'Не вдалося завантажити квиток'
+        }
+        description="Перевірте посилання або зареєструйтеся на захід ще раз."
+        actionLabel="До каталогу"
+      />
     )
   }
 
